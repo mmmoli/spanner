@@ -136,11 +136,21 @@ var spanner = function(google){
             );
 
             // =================================================================
-            $("#actions").append('<a class="button positive" id="add">Add</a><form action="#" id="addbox" class="off"><input class="hide" type="submit" value="Do it" /></div>');
+            $("#actions").append('<a class="button positive" id="add">Add</a><form action="#" id="addbox" class="off"><input class="submit" type="submit" value="Add" /></div>');
 
             $("#addbox").append('<span class="in"><label for="newSpanLabel">Label <span>make it unique</span></span></label><input type="text" id="newSpanLabel" /></span>');
             $("#addbox").append('<span class="in"><label for="newSpanStart">Start <span>e.g. 1 Jan 1984</span></label><input type="text" id="newSpanStart" /></span>');
             $("#addbox").append('<span class="in"><label for="newSpanEnd">End <span>you guessed it</span></label><input type="text" id="newSpanEnd" /></span>');
+            
+            $("#addbox").append('<span class="in"><label for="newSpanType">Type <span>(experimental)</span></label>'+
+                                '<select id="newSpanType">'+
+                                    '<option value="life">Life</option>'+
+                                    '<option value="education">Education</option>'+
+                                    '<option value="job">Job</option>'+
+                                    '<option value="relationship">Relationship</option>'+
+                                    '<option value="location">Location</option>'+
+                                    '<option value="thing">Thing</option>'+
+                                '</select></span>');
 
             bind(
                 "#add",
@@ -156,6 +166,8 @@ var spanner = function(google){
                             e.preventDefault();
                             
                             var spanLabel = $("#newSpanLabel").val();
+                            var spanType = $("#newSpanType").val();
+
                             var startRawDate = $("#newSpanStart").val();
                             var endRawDate = $("#newSpanEnd").val();
 
@@ -164,7 +176,7 @@ var spanner = function(google){
                                 var startJSDate = new Date(startRawDate);
                                 var endJSDate = new Date(endRawDate);
 
-                                that.addSpan(google, spanLabel, startJSDate, endJSDate);                        
+                                that.addSpan(google, spanLabel, spanType, startJSDate, endJSDate);                        
                                console.log(spanLabel+" "+startJSDate+" "+endJSDate);
                             } else{
                                 $("#messages").html("<p>You left some bits out...</p>");
@@ -322,7 +334,7 @@ var spanner = function(google){
             };
 
             // =================================================================
-            r.addSpan = function( google, spanLabel, startDate, endDate ){
+            r.addSpan = function( google, spanLabel, spanType, startDate, endDate ){
 
                 $("#messages").html("<p>Adding the new span...</p>");
 
@@ -345,6 +357,11 @@ var spanner = function(google){
                 when.setStartTime(startTime);
                 when.setEndTime(endTime);
                 entry.addTime(when);
+
+                var extendedProp = new google.gdata.ExtendedProperty();
+                extendedProp.setName('spanType');
+                extendedProp.setValue( spanType );
+                entry.addExtendedProperty(extendedProp);
 
                 var callback = function(result) {
                     //console.log('event created!');
@@ -372,6 +389,7 @@ var spanner = function(google){
                 function (e) {
                     var spanLabel = $($(this).get(".label")[0]).text();
                     //alert(spanLabel);
+                    $(this).css("opacity", "0.5");
                     that.deleteSpan( google, spanLabel );
 
                     $("#deleter").removeClass("active");
@@ -381,7 +399,7 @@ var spanner = function(google){
 
             // =================================================================
             r.deleteSpan = function(google, searchText){
-                $("#messages").html('<p>Deleting...' + searchText +'</p>');
+                $("#messages").html('<p>Deleting... ' + searchText +'</p>');
 
                 var that = this;
 
@@ -421,8 +439,21 @@ var spanner = function(google){
 
                         for (var i = 0; i < entries.length; i++) {
                             var calendarEntry = entries[i];
+                            
+                            //console.log(calendarEntry);
+                            
                             var spanLabel = calendarEntry.getTitle().getText();
-
+                            
+                            var props = calendarEntry.getExtendedProperties();
+                            
+                            var spanType = "normal";
+                            
+                            for (var x = 0; x < props.length; x++) {
+                                if(props[x].getName() == "spanType"){
+                                    var spanType = props[x].getValue();
+                                }
+                            }
+                            
                             var times = calendarEntry.getTimes();
 
                             if (times.length > 0) {
@@ -437,9 +468,8 @@ var spanner = function(google){
                             //console.log('Calendar dates = ' + startJSDate + " - " + endJSDate);
 
                             var spanid = spanLabel.replace(" ", "_");
-                            var spantype = "thing";
 
-                            spans[spanid] = new Span(spanid, spanLabel, spantype, startJSDate, endJSDate );
+                            spans[spanid] = new Span(spanid, spanLabel, spanType, startJSDate, endJSDate );
 
                             // this is a bit hacky...
 

@@ -12,11 +12,18 @@ ul { width: 100%; margin: 50px 0; float: left; }
 ul li { background: #eee; margin: 0 0 3px 0; float: left; width: 100%; }
 span { display: block; }
 .event { float: right; position: relative; height: 13px; background: #999; width: 13px; text-align: center; opacity: 0.8; }
-.over .event { opacity: 1; }
+.over .event { opacity: 1; cursor: pointer; }
 
-.start, .end { width: 1px; position: absolute; top: 0; height: 1px; border: 6px solid #eee; }
-.start { background: #999; left: 0; border-right-color: #999; border-left: none; }
-.end { background: #999; right: 0; border-left-color: #999; border-right: none; }
+.life { background: red; }
+.education { background: blue; }
+.job { background: green; }
+.relationship { background: aqua; }
+.location { background: yellow; }
+.thing { background: purple; }
+
+.start, .end { width: 0; position: absolute; top: 0; height: 1px; border: 6px solid #eee; }
+.start { background: transparent; left: 0; border-right-color: transparent; border-left: none; }
+.end { background: transparent; right: 0; border-left-color: transparent; border-right: none; }
 
 .ongoing { }
 .ongoing .start {  }
@@ -26,9 +33,12 @@ span { display: block; }
 
 .tip { opacity: 0; display: block; padding: 2px 13px; background: #c00; width: 60px; height: 13px; position: absolute; top: -24px; left: -26px; font-size: 0.7em; color: #fff; -moz-border-radius: 3px; border-radius: 3px; text-decoration: none; z-index: 999; }
 .tip span { display: block; width: 0; height: 0; border: 6px solid transparent; border-bottom: none; border-top-color: #c00; position: absolute; top: 17px; left: 19px; }
-.on .tip { opacity: 1; cursor: ew-resize; }
 
-.end .tip { left: -23px; }
+.end .tip { top: 8px; left: -23px; }
+.end .tip span { display: block; width: 0; height: 0; border: 6px solid transparent; border-top: none; border-bottom-color: #c00; position: absolute; top: -6px; left: 18px; }
+
+.over .tip { opacity: 0.6; /* cursor: ew-resize; */ }
+
 
 /* ====================================================== */
 #addbox { background: #555; color: #fff; position: absolute; top: 13px; right: 13px; }
@@ -42,6 +52,7 @@ span { display: block; }
 #actions .in { margin: 13px; float: left; background: #666; padding: 5px 5px 13px 5px; position: relative; }
 #actions .in label { font-size: 0.8em; margin: 0 13px 0 0;}
 #actions .in label span { position: absolute; top: 28px; left: 58px; font-size: 0.8em;}
+#actions .submit { margin: 20px 13px 0 13px; padding: 2px 13px; -moz-border-radius: 3px; border-radius: 3px; cursor: pointer; background: #dfe; border: none; }
 
 #utils { width: 40%; float: right; }
 

@@ -4,19 +4,17 @@ var spanner = function(google){
     $,
     glow,
     google,
+    g,
     gcal,
     query,
     lifespanUrl,
     allFeedsUrl = "http://www.google.com/calendar/feeds/default/owncalendars/full",
-    g,
     scale = 1,
     spans = {},
     actionListener;
 
     // =================================================================
-    // a span
     var Span = function(id, label, type, start, end){
-
 
         this.id = id;
         this.spanLabel = label;
@@ -57,12 +55,12 @@ var spanner = function(google){
         this.spanOffsetWidth = this.spanOffset * scale;
 
         this.create();
-        this.adjust();
+        this.setPosition();
     };
 
 
     // =================================================================
-    Span.prototype.adjust = function(){
+    Span.prototype.setPosition = function(){
         $("#" + this.id).css("width", this.spanWidth);
         $("#" + this.id).css("margin-right", this.spanOffsetWidth);
     };
@@ -86,7 +84,6 @@ var spanner = function(google){
         '<//li>');
 
         $("#events").append(this.item);
-
     };
 
     // =================================================================
@@ -98,14 +95,89 @@ var spanner = function(google){
 
     // =================================================================
     r.setupUI = function(google) {
+        var that = this;
 
+        // =================================================================
         $("#utils").append('<a class="button negative" id="logout">Log out</a>');
-
         bind(
-            "#logout",
-            "click",
+            "#logout", "click",
             function (e) {
                 that.logMeOut(google);
+            }
+        );
+
+        // =================================================================
+        bind(
+            "#add",
+            "click",
+            function (e) {
+                $("#addbox").addClass("on");
+                $("#newSpanLabel")[0].focus();
+                
+                $("#messages").html('<p>Enter the details of a span... (Or <a href="#" id="addcancel">don\'t bother</a></a>)</p>');
+
+                bind(
+                    "#addbox", "submit",
+                    function (e) {
+                        e.preventDefault();
+                        that.doAdd(google);
+                    }
+                );
+                
+                bind(
+                    "#addcancel", "click",
+                    function (e) {
+                        e.preventDefault();
+                        $("#addbox").removeClass("on");
+                        $("#messages").html('<p>OK.</p>');
+                    }
+                );
+            }
+        );
+
+        // =================================================================
+        var ed = bind(
+            "#editor",
+            "click",
+            function (e) {
+                $("#messages").html('<p>Click on the span you want to edit. (Or <a href="#" id="edcancel">don\'t bother</a></a>)</p>');
+
+                $(this).addClass("active");
+                that.editSpans(google);
+
+                bind(
+                    "#edcancel", "click",
+                    function (e) {
+                        e.preventDefault();
+                        g.events.removeListener(actionListener);
+                        $("#editor").removeClass("active");
+                        $("#addbox").removeClass("on");
+                        $("#messages").html('<p>OK.</p>');
+                    }
+                );
+
+            }
+        );
+
+        // =================================================================
+        var del = bind(
+            "#deleter", "click",
+            function (e) {
+                $("#messages").html('<p>Click on the span you want to delete. (Or <a href="#" id="delcancel">don\'t bother</a></a>)</p>');
+
+                $(this).addClass("active");
+                that.deleteSpans(google);
+
+                bind(
+                    "#delcancel", "click",
+                    function (e) {
+                        e.preventDefault();
+                        g.events.removeListener(actionListener);
+                        $("#deleter").removeClass("active");
+                        $("#messages").html('<p>OK.</p>');
+                    }
+                );
+
             }
         );
 
@@ -118,53 +190,178 @@ var spanner = function(google){
 
         scope = "http://www.google.com/calendar/feeds/";
 
-        if (google.accounts.user.checkLogin(scope)) {
+        if(google.accounts.user.checkLogin(scope)){
 
-            // =================================================================
-            // move this to a 'fire up UI' method...
-
+            that.setupUI(google);
             that.checkCalendars(google);
 
-            // =================================================================
-            $("#utils").append('<a class="button negative" id="logout">Log out</a>');
+        } else {
+
+            $("#actions").css("display", "none");
+            $("#utils").append('<a class="button positive" href="#" id="connect">Connect to your Google account</a>');
             bind(
-                "#logout",
-                "click",
+                "#connect","click",
                 function (e) {
-                    that.logMeOut(google);
+                    that.logMeIn(google);
                 }
             );
+        }
+    };
 
-            // =================================================================
-            $("#actions").append('<a class="button positive" id="add">Add</a><form action="#" id="addbox" class="off"><input class="submit" type="submit" value="Add" /></div>');
+    // =================================================================
+    r.doAdd = function(google){
+        
+        var spanLabel = $("#newSpanLabel").val();
+        var spanType = $("#newSpanType").val();
+        var startRawDate = $("#newSpanStart").val();
+        var endRawDate = $("#newSpanEnd").val();
 
-            $("#addbox").append('<span class="in"><label for="newSpanLabel">Label <span>make it unique</span></span></label><input type="text" id="newSpanLabel" /></span>');
-            $("#addbox").append('<span class="in"><label for="newSpanStart">Start <span>e.g. 1 Jan 1984</span></label><input type="text" id="newSpanStart" /></span>');
-            $("#addbox").append('<span class="in"><label for="newSpanEnd">End <span>you guessed it</span></label><input type="text" id="newSpanEnd" /></span>');
-            
-            $("#addbox").append('<span class="in"><label for="newSpanType">Type <span>(experimental)</span></label>'+
-                                '<select id="newSpanType">'+
-                                    '<option value="life">Life</option>'+
-                                    '<option value="education">Education</option>'+
-                                    '<option value="job">Job</option>'+
-                                    '<option value="relationship">Relationship</option>'+
-                                    '<option value="location">Location</option>'+
-                                    '<option value="thing">Thing</option>'+
-                                '</select></span>');
+        if( (spanLabel != "") && (startRawDate != "") && (endRawDate != "") ){
 
-            bind(
-                "#add",
-                "click",
-                function (e) {
+            var startJSDate = new Date(startRawDate);
+            var endJSDate = new Date(endRawDate);
+
+            this.addSpan(google, spanLabel, spanType, startJSDate, endJSDate);                        
+
+        } else{
+            $("#messages").html("<p>You left some bits out...</p>");
+        }
+    }
+
+    // =================================================================
+    r.logMeIn  = function(google) {
+        scope = "http://www.google.com/calendar/feeds/";
+        var token = google.accounts.user.login(scope);
+    };
+
+    // =================================================================
+    r.logMeOut = function(google) {
+        google.accounts.user.logout();
+        window.location.reload();
+    };
+
+    // =================================================================
+    r.handleError = function(e) {
+        alert("There was an error!");
+        alert(e.cause ? e.cause.statusText : e.message);
+    };
+
+    // =================================================================
+    r.checkCalendars = function(google){
+
+        var that = this;
+        var callback = function(result) {
+
+            var entries = result.feed.entry;
+            var gotCalendar = false;
+
+            for (var i = 0; i < entries.length; i++) {
+                var calendarEntry = entries[i];
+                var calendarTitle = calendarEntry.getTitle().getText();
+
+                if(calendarTitle == "Lifespan"){
+                    gotCalendar = calendarEntry;
+                }
+            }
+
+            if(!gotCalendar){
+                that.makeCalendar(google);
+            } else {
+                lifespanUrl = gotCalendar.getLink().getHref();
+                that.getSpans(google, that.drawSpans);
+            }
+        };
+        gcal.getAllCalendarsFeed(allFeedsUrl, callback, this.handleError);
+    };
+
+    // =================================================================
+    r.makeCalendar = function(google){
+
+        var that = this;
+
+        var entry = new google.gdata.calendar.CalendarEntry();
+        entry.setTitle(google.gdata.Text.create('Lifespan'));
+        var summary = new google.gdata.Text();
+        summary.setText('The Lifespan Prototype...');
+        entry.setSummary(summary);
+        var hidden = new google.gdata.calendar.HiddenProperty();
+        hidden.setValue(false);
+        entry.setHidden(hidden);
+        var color = new google.gdata.calendar.ColorProperty();
+        color.setValue('#2952A3');
+        entry.setColor(color);
+
+        var callback = function(result) {      
+            $("#messages").html("<p>The Lifespan calendar was successfully created.</p>");
+            that.checkCalendars(google);
+        };
+
+        var error = function(e) {      
+            $("#messages").html("<p>Hmmm. The Lifespan calendar couldn't be created.</p>");
+        };
+
+        gcal.insertEntry(allFeedsUrl, entry, callback, error, google.gdata.calendar.CalendarEntry);
+    };
+
+    // =================================================================
+    r.getSpans = function(google, callback){
+        $("#messages").html("<p>Getting stuff...</p>");
+
+        var query = new google.gdata.calendar.CalendarEventQuery(lifespanUrl);
+        query.setMaxResults("500");
+        query.setSortOrder("ascending");
+        query.setParam("orderby","starttime");
+        gcal.getEventsFeed(query, callback, this.handleError);
+    };
+
+    // =================================================================
+    r.editSpans = function(google){
+
+        var that = this;
+
+        actionListener = bind(".event",
+        "click",
+        function (e) {
+            var spanLabel = $($(this).get(".label")[0]).text();
+
+            that.findSpan(google, spanLabel,
+                function(span){
+
                     $("#addbox").addClass("on");
-                    $("#messages").html("<p>Enter the details of a span...</p>");
+                    $($("#addbox .submit")[0]).val("Update");
+
+                    var times = span.getTimes();
+
+                    if (times.length > 0) {
+                        startDateTime = times[0].getStartTime();
+                        startJSDate = startDateTime.getDate();
+
+                        endDateTime = times[0].getEndTime();
+                        endJSDate = endDateTime.getDate();
+                    }
+
+                    $("#newSpanLabel").val(span.getTitle().getText());
+                    
+                    var props = span.getExtendedProperties();
+
+                    var spanType = "normal";
+
+                    for (var x = 0; x < props.length; x++) {
+                        if(props[x].getName() == "spanType"){
+                            spanType = props[x].getValue();
+                        }
+                    }
+                    $("#newSpanType").val(spanType);
+
+                    $("#newSpanStart").val( startJSDate.getDate() + " " + (startJSDate.getMonth()+1) + " " + startJSDate.getFullYear() );
+                    $("#newSpanEnd").val( endJSDate.getDate() + " " + (endJSDate.getMonth()+1) + " " + endJSDate.getFullYear() );
 
                     bind(
                         "#addbox",
                         "submit",
                         function (e) {
                             e.preventDefault();
-                            
+
                             var spanLabel = $("#newSpanLabel").val();
                             var spanType = $("#newSpanType").val();
 
@@ -176,169 +373,82 @@ var spanner = function(google){
                                 var startJSDate = new Date(startRawDate);
                                 var endJSDate = new Date(endRawDate);
 
-                                that.addSpan(google, spanLabel, spanType, startJSDate, endJSDate);                        
-                               console.log(spanLabel+" "+startJSDate+" "+endJSDate);
+                                that.editSpan(google, span, spanLabel, spanType, startJSDate, endJSDate);                        
+                                //console.log(spanLabel+" "+startJSDate+" "+endJSDate);
+
                             } else{
                                 $("#messages").html("<p>You left some bits out...</p>");
                             }
                         }
                     );
 
+                },
+                function(){
+                    alert("hmmm, that span doesn't exist");
                 }
             );
 
-            // =================================================================
-            //$("#actions").append('<a class="button positive" id="refresh">Refresh</a>');
-            //bind(
-                //    "#refresh",
-                //    "click",
-                //    function (e) {
-                    //        that.getSpans(google);
-                    //    }
-                    //);
+            $("#editor").removeClass("active");
+        });
 
-                    // =================================================================
-                    $("#actions").append('<a class="button negative" id="deleter">Delete</a>');
-
-                    var del = bind(
-                        "#deleter",
-                        "click",
-                        function (e) {
-                            $("#messages").html('<p>Click on the span you want to delete. (Or <a href="#" id="delcancel">don\'t bother</a></a>)</p>');
-                        
-                            $(this).addClass("active");
-                            that.deleteSpans(google);
-                            
-                            bind(
-                                "#delcancel",
-                                "click",
-                                function (e) {
-                                    e.preventDefault();
-                                    g.events.removeListener(actionListener);
-                                    $("#deleter").removeClass("active");
-                                    $("#messages").html('<p>OK.</p>');
-                                }
-                            );
-                                                        
-                        }
-                    );
+    };
 
 
-                } else {
 
-                    $("#utils").append('<a class="button positive" href="#" id="connect">Connect to your Google account</a>');
-                    bind(
-                        "#connect",
-                        "click",
-                        function (e) {
-                            that.logMeIn(google);
-                        }
-                    );
-                }
-            };
+    // =================================================================
+    r.editSpan = function(google, span, newLabel, newType, newStartDate, newEndDate ){
 
-            // =================================================================
-            r.logMeIn  = function(google) {
-                scope = "http://www.google.com/calendar/feeds/";
-                var token = google.accounts.user.login(scope);
-            };
+        var that = this;
 
-            // =================================================================
-            r.logMeOut = function(google) {
-                google.accounts.user.logout();
-                window.location.reload();
-            };
+        span.setTitle(google.gdata.Text.create(newLabel));
+        var when = new google.gdata.When();
 
-            // =================================================================
-            r.handleError = function(e) {
-                alert("There was an error!");
-                alert(e.cause ? e.cause.statusText : e.message);
-            };
+        // this is dodgy, but it works...
+        var st = google.gdata.DateTime.toIso8601( newStartDate );
+        var et = google.gdata.DateTime.toIso8601( newEndDate );
 
-            // =================================================================
-            r.checkCalendars = function(google){
+        var startTime = google.gdata.DateTime.fromIso8601( st );
+        var endTime = google.gdata.DateTime.fromIso8601( et );
 
-                var that = this;
+        when.setStartTime(startTime);
+        when.setEndTime(endTime);
+        span.addTime(when);
 
-                var callback = function(result) {
+        var extendedProp = new google.gdata.ExtendedProperty();
+        extendedProp.setName('spanType');
+        extendedProp.setValue( newType );
+        span.addExtendedProperty(extendedProp);
 
-                    var entries = result.feed.entry;
-                    var gotCalendar = false;
+        span.updateEntry(
+            function(result) {
+                that.getSpans(google, that.drawSpans);
 
-                    for (var i = 0; i < entries.length; i++) {
-                        var calendarEntry = entries[i];
-                        var calendarTitle = calendarEntry.getTitle().getText();
+                $("#newSpanLabel").val("");
+                $("#newSpanStart").val("");
+                $("#newSpanEnd").val("");
 
-                        if(calendarTitle == "Lifespan"){
-                            gotCalendar = calendarEntry;
-                        }
-                    }
+            }, 
+            function() {
+                console.log('arse!');
+            }
+        );
 
-                    if(!gotCalendar){
+    };
 
-                        that.makeCalendar(google);
+    // =================================================================
+    r.addSpan = function( google, spanLabel, spanType, startDate, endDate ){
+        var it = this;
 
-                    } else {
+        this.findSpan(google, spanLabel,
+            function(){
+                alert("sorry, that already exists");
+            },
+            function(){
 
-                        lifespanUrl = gotCalendar.getLink().getHref();
-                        that.getSpans(google);
-
-                    }
-                }
-
-                gcal.getAllCalendarsFeed(allFeedsUrl, callback, this.handleError);
-
-            };
-
-            // =================================================================
-            r.makeCalendar = function(google){
-
-                var that = this;
-
-                var entry = new google.gdata.calendar.CalendarEntry();
-                entry.setTitle(google.gdata.Text.create('Lifespan'));
-
-                var summary = new google.gdata.Text();
-                summary.setText('The Lifespan Prototype...');
-                entry.setSummary(summary);
-
-                // Set the calendar to be visible in the Google Calendar UI
-                var hidden = new google.gdata.calendar.HiddenProperty();
-                hidden.setValue(false);
-                entry.setHidden(hidden);
-                var color = new google.gdata.calendar.ColorProperty();
-                color.setValue('#2952A3');
-                entry.setColor(color);
-
-                var callback = function(result) {      
-                    $("#messages").html("<p>The Lifespan calendar was successfully created.</p>");
-                    that.checkCalendars(google);
-                }
-
-                var error = function(e) {      
-                    $("#messages").html("<p>Hmmm. The Lifespan calendar couldn't be created.</p>");
-                }
-
-                gcal.insertEntry(allFeedsUrl, entry, callback, error, google.gdata.calendar.CalendarEntry);
-            };
-
-            // =================================================================
-            r.getSpans = function(google){
-                $("#messages").html("<p>Getting stuff...</p>");
-
-                var query = new google.gdata.calendar.CalendarEventQuery(lifespanUrl);
-                query.setMaxResults("500");
-                query.setSortOrder("ascending");
-                query.setParam("orderby","starttime");
-                gcal.getEventsFeed(query, this.drawSpans, this.handleError);
-            };
-
-            // =================================================================
-            r.addSpan = function( google, spanLabel, spanType, startDate, endDate ){
-
+                // =================================================================
                 $("#messages").html("<p>Adding the new span...</p>");
 
-                var that = this;
+                var that = it;
 
                 var entry = new google.gdata.calendar.CalendarEventEntry();
                 entry.setTitle( google.gdata.Text.create( spanLabel ) );
@@ -352,8 +462,6 @@ var spanner = function(google){
                 var startTime = google.gdata.DateTime.fromIso8601( st );
                 var endTime = google.gdata.DateTime.fromIso8601( et );
 
-                //console.log( spanLabel + " = " + startTime + " = " + endTime );
-
                 when.setStartTime(startTime);
                 when.setEndTime(endTime);
                 entry.addTime(when);
@@ -365,197 +473,242 @@ var spanner = function(google){
 
                 var callback = function(result) {
                     //console.log('event created!');
-                    that.getSpans(google);
+                    that.getSpans(google, that.drawSpans);
 
                     $("#newSpanLabel").val("");
                     $("#newSpanStart").val("");
                     $("#newSpanEnd").val("");
-                }
+                };
 
                 var error = function(e) {      
                     $("#messages").html("<p>Hmmm. Had trouble adding that new span. Try again?</p>");
-                }
+                };
 
                 gcal.insertEntry(lifespanUrl, entry, callback, error, google.gdata.calendar.CalendarEventEntry);
+
+                // =================================================================
+            }
+        );
+
+
+    };
+
+    // =================================================================
+    r.deleteSpans = function(google){
+
+        var that = this;
+
+        actionListener = bind(".event",
+        "click",
+        function (e) {
+            var spanLabel = $($(this).get(".label")[0]).text();
+            //alert(spanLabel);
+            $(this).css("opacity", "0.5");
+            that.deleteSpan( google, spanLabel );
+
+            $("#deleter").removeClass("active");
+        });
+
+    };
+
+    // =================================================================
+    r.deleteSpan = function(google, searchText){
+        $("#messages").html('<p>Deleting... ' + searchText +'</p>');
+
+        var that = this;
+
+        var query = new google.gdata.calendar.CalendarEventQuery(lifespanUrl);
+
+        query.setFullTextQuery(searchText);
+        var callback = function(result) {
+            var entries = result.feed.entry;
+            if (entries.length == 1) { // found exactly one match
+                var event = entries[0];
+                event.deleteEntry(
+                    function(result) {
+                        // refresh all spans
+                        $("#messages").html("<p>OK, deleted that.</p>");
+
+                        that.getSpans(google, that.drawSpans);
+                    }, 
+                    this.handleError);
+
+                } else {
+                    $("#messages").html("<p>Hmmm. Bit of a problem deleting that one.</p>");
+                }
             };
 
-            // =================================================================
-            r.deleteSpans = function(google, searchText){
+            gcal.getEventsFeed(query, callback, this.handleError);
+        };
 
-                var that = this;
 
-                actionListener = bind(".event",
-                "click",
-                function (e) {
-                    var spanLabel = $($(this).get(".label")[0]).text();
-                    //alert(spanLabel);
-                    $(this).css("opacity", "0.5");
-                    that.deleteSpan( google, spanLabel );
+        // =================================================================
+        r.findSpan = function(google, searchText, foundCallback, notFoundCallback){
 
-                    $("#deleter").removeClass("active");
-                });
+            var query = new google.gdata.calendar.CalendarEventQuery(lifespanUrl);
+            query.setFullTextQuery(searchText);
 
+            var callback = function(root) {
+                var eventEntries = root.feed.getEntries();
+
+                if (eventEntries.length > 0) { // must match once only
+                    for (var i = 0; i < eventEntries.length; i++) {
+                        var event = eventEntries[i];
+
+                        var result = false;
+
+                        if(event.getTitle().getText() == searchText){
+                            result = event;
+                        }
+                        if(result){
+                            foundCallback(result);
+                        }
+                    }
+                } else {
+                    // No match is found for the full text query
+                    notFoundCallback(result);
+                }
             };
 
-            // =================================================================
-            r.deleteSpan = function(google, searchText){
-                $("#messages").html('<p>Deleting... ' + searchText +'</p>');
+            var handleError = function(error) {
+                console.log(error);
+            };
 
-                var that = this;
+            gcal.getEventsFeed(query, callback, handleError);
+        };
 
-                var query = new google.gdata.calendar.CalendarEventQuery(lifespanUrl);
+        // =================================================================
+        r.drawSpans  = function(feedRoot) {
+            $("#events").html("");
+            $("#addbox").removeClass("on");
+            
+            $("#messages").html("<p>Got things.</p>");
 
-                query.setFullTextQuery(searchText);
-                var callback = function(result) {
-                    var entries = result.feed.entry;
-                    if (entries.length == 1) { // found exactly one match
-                        var event = entries[0];
-                        event.deleteEntry(
-                            function(result) {
-                                // refresh all spans
-                                $("#messages").html("<p>OK, deleted that.</p>");
+            var entries = feedRoot.feed.entry;
 
-                                that.getSpans(google);
-                            }, 
-                            this.handleError);
+            if (entries.length > 0) {
 
-                        } else {
-                            $("#messages").html("<p>Hmmm. Bit of a problem deleting that one.</p>");
+                for (var i = 0; i < entries.length; i++) {
+                    var calendarEntry = entries[i];
+
+                    //console.log(calendarEntry);
+
+                    var spanLabel = calendarEntry.getTitle().getText();
+
+                    var props = calendarEntry.getExtendedProperties();
+
+                    var spanType = "normal";
+
+                    for (var x = 0; x < props.length; x++) {
+                        if(props[x].getName() == "spanType"){
+                            spanType = props[x].getValue();
                         }
                     }
 
-                    gcal.getEventsFeed(query, callback, this.handleError);
-                };
+                    var times = calendarEntry.getTimes();
 
-                // =================================================================
-                r.drawSpans  = function(feedRoot) {
-                    $("#events").html("");
+                    if (times.length > 0) {
+                        startDateTime = times[0].getStartTime();
+                        startJSDate = startDateTime.getDate();
 
-                    $("#messages").html("<p>Got things.</p>");
-
-                    var entries = feedRoot.feed.entry;
-
-                    if (entries.length > 0) {
-
-                        for (var i = 0; i < entries.length; i++) {
-                            var calendarEntry = entries[i];
-                            
-                            //console.log(calendarEntry);
-                            
-                            var spanLabel = calendarEntry.getTitle().getText();
-                            
-                            var props = calendarEntry.getExtendedProperties();
-                            
-                            var spanType = "normal";
-                            
-                            for (var x = 0; x < props.length; x++) {
-                                if(props[x].getName() == "spanType"){
-                                    var spanType = props[x].getValue();
-                                }
-                            }
-                            
-                            var times = calendarEntry.getTimes();
-
-                            if (times.length > 0) {
-                                startDateTime = times[0].getStartTime();
-                                startJSDate = startDateTime.getDate();
-
-                                endDateTime = times[0].getEndTime();
-                                endJSDate = endDateTime.getDate();
-                            }
-
-                            //console.log('Calendar title = ' + spanLabel.replace(" ", "_") );
-                            //console.log('Calendar dates = ' + startJSDate + " - " + endJSDate);
-
-                            var spanid = spanLabel.replace(" ", "_");
-
-                            spans[spanid] = new Span(spanid, spanLabel, spanType, startJSDate, endJSDate );
-
-                            // this is a bit hacky...
-
-                            if(i == entries.length - 1){
-                                $("#messages").html("There you go.");
-
-                                bind("#events li",
-                                "mouseenter",
-                                function (e) {
-                                    $(this).addClass("over");
-                                });
-
-                                bind("#events li",
-                                "mouseleave",
-                                function (e) {
-                                    $(this).removeClass("over");
-                                });
-
-                            }
-                        }
-
-                    } else {
-                        // No match is found for the full text query
-                        //console.log('no events are matched from the query!');
-                        $("#messages").html("<p>You need to create some spans. Start by entering your date of birth, and a far-future end time ;-)");
+                        endDateTime = times[0].getEndTime();
+                        endJSDate = endDateTime.getDate();
                     }
-                };
 
+                    //console.log('Calendar title = ' + spanLabel.replace(" ", "_") );
+                    //console.log('Calendar dates = ' + startJSDate + " - " + endJSDate);
 
-                // =================================================================
-                // set up our shortcuts
-                // set up the basic DOM
-                // fire up google calendar API
+                    var spanid = spanLabel.replace(" ", "_");
 
-                r.init = function(glow, google){
-                    g = glow;
-                    $ = g.dom.get;
-                    bind = g.events.addListener;
+                    spans[spanid] = new Span(spanid, spanLabel, spanType, startJSDate, endJSDate );
 
-                    var set = g.dom.create('<ul id="events"></ul>');
-                    $("body").append(set);
+                    // this is a bit hacky...
 
-                    // we need to stop passing google around... :-/
-                    this.setupService(google);
+                    if(i == entries.length - 1){
+                        $("#messages").html("There you go.");
 
-                };
-                // =================================================================
+                            bind(".event",
+                            "mouseenter",
+                            function (e) {
+                                $(this).addClass("over");
+                            });
 
-                return r;
-                }();
+                            bind(".event",
+                            "mouseleave",
+                            function (e) {
+                                $(this).removeClass("over");
+                            });
 
-
-                // =================================================================
-                // =================================================================
-                // check for google JS, and if it's there, continue...
-
-                if (typeof google == 'undefined') {  
-
-                    alert("sorry, we need access to Google...");
+                        }
+                    }
 
                 } else {
 
-                    google.load("gdata", "1");
-                    google.setOnLoadCallback(kickoff);
+                    $("#messages").html("<p>You need to create some spans. Start by entering your date of birth, and a far-future end time ;-)");
                 }
+            };
 
-                // =================================================================
-                // we have google, we now want to wait for glow
-                // and then we'll fire the init method
+            // =================================================================
+            r.getInfo = function(){
+                
+            };
 
-                function kickoff() {
+            // =================================================================
+            // set up our shortcuts
+            // set up the basic DOM
+            // fire up google calendar API
 
-                    glow.ready(
-                        function(){
-                            spanner.init(glow, google);
-                        }
-                    );
-                };
+            r.init = function(glow, google){
+                g = glow;
+                $ = g.dom.get;
+                bind = g.events.addListener;
 
-                // =================================================================
-                function oc(a)
-                {
-                    var o = {};
-                    for(var i=0;i<a.length;i++)
-                    {
-                        o[a[i]]='';
+                var set = g.dom.create('<ul id="events"></ul>');
+                $("body").append(set);
+
+                // we need to stop passing google around... :-/
+                this.setupService(google);
+
+            };
+            // =================================================================
+
+            return r;
+            }();
+
+
+            // =================================================================
+            // =================================================================
+            // check for google JS, and if it's there, continue...
+
+            if (typeof google == 'undefined') {  
+
+                alert("sorry, we need access to Google...");
+
+            } else {
+
+                google.load("gdata", "1");
+                google.setOnLoadCallback(kickoff);
+            }
+
+            // =================================================================
+            // we have google, we now want to wait for glow
+            // and then we'll fire the init method
+
+            function kickoff(){
+                glow.ready(
+                    function(){
+                        spanner.init(glow, google);
                     }
-                    return o;
+                );
+            };
+
+            // =================================================================
+            function oc(a)
+            {
+                var o = {};
+                for(var i=0;i<a.length;i++)
+                {
+                    o[a[i]]='';
                 }
+                return o;
+            }

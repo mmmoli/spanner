@@ -2,7 +2,7 @@
 #googlething { position: absolute; left: -9999px; }
 .hide { position: absolute; left: -9999px;  }
 /* ====================================================== */
-body { background: #fff; font-family: arial; color: #333; height: 100%; margin: 0 13px; }
+body { background: #fff; font-family: arial; color: #333; height: 100%; margin: 0 52px; }
 h1 { margin: 13px; font-size: 2em; }
 h1 sup { font-size: 0.3em; }
 #messages { margin: 13px; }
@@ -11,15 +11,15 @@ h1 sup { font-size: 0.3em; }
 ul { width: 100%; margin: 50px 0; float: left; }
 ul li { background: #eee; margin: 0 0 3px 0; float: left; width: 100%; }
 span { display: block; }
-.event { float: right; position: relative; height: 13px; background: #999; width: 13px; text-align: center; opacity: 0.8; }
+.event { float: right; position: relative; height: 13px; background: #999; width: 13px; text-align: center; }
 .over .event { opacity: 1; cursor: pointer; }
 
-.life { background: red; }
-.education { background: blue; }
-.job { background: green; }
-.relationship { background: aqua; }
-.location { background: yellow; }
-.thing { background: purple; }
+.life { background: #288989; }
+.education { background: #316C92; }
+.job { background: #E58C43; }
+.relationship { background: #10405F; }
+.location { background: #7FACC9; }
+.thing { background: #0D5959; }
 
 .start, .end { width: 0; position: absolute; top: 0; height: 1px; border: 6px solid #eee; }
 .start { background: transparent; left: 0; border-right-color: transparent; border-left: none; }
@@ -27,9 +27,9 @@ span { display: block; }
 
 .ongoing { }
 .ongoing .start {  }
-.ongoing .end { display: none; }
+.ongoing .end {  }
 
-.label { font-size: 0.7em; line-height: 13px; height: 13px; color: #000; display: block; overflow: hidden; }
+.label { font-size: 0.7em; line-height: 13px; height: 13px; color: #ddd; display: block; overflow: hidden; }
 
 .tip { opacity: 0; display: block; padding: 2px 13px; background: #c00; width: 60px; height: 13px; position: absolute; top: -24px; left: -26px; font-size: 0.7em; color: #fff; -moz-border-radius: 3px; border-radius: 3px; text-decoration: none; z-index: 999; }
 .tip span { display: block; width: 0; height: 0; border: 6px solid transparent; border-bottom: none; border-top-color: #c00; position: absolute; top: 17px; left: 19px; }
@@ -37,11 +37,11 @@ span { display: block; }
 .end .tip { top: 8px; left: -23px; }
 .end .tip span { display: block; width: 0; height: 0; border: 6px solid transparent; border-top: none; border-bottom-color: #c00; position: absolute; top: -6px; left: 18px; }
 
-.over .tip { opacity: 0.6; /* cursor: ew-resize; */ }
+.over .tip { opacity: 1; /* cursor: ew-resize; */ }
 
 
 /* ====================================================== */
-#addbox { background: #555; color: #fff; position: absolute; top: 13px; right: 13px; }
+#addbox { background: #555; color: #fff; position: absolute; top: 88px; right: 52px; }
 #addbox.off { display: none; }
 #addbox.on { display: block; }
 
@@ -50,6 +50,10 @@ span { display: block; }
 #actions { width: 40%; float: left; }
 
 #actions .in { margin: 13px; float: left; background: #666; padding: 5px 5px 13px 5px; position: relative; }
+#actions .in input,
+#actions .in select { border: 1px solid transparent;  }
+#actions .in input:focus,
+#actions .in select:focus { border: 1px solid #c00;  }
 #actions .in label { font-size: 0.8em; margin: 0 13px 0 0;}
 #actions .in label span { position: absolute; top: 28px; left: 58px; font-size: 0.8em;}
 #actions .submit { margin: 20px 13px 0 13px; padding: 2px 13px; -moz-border-radius: 3px; border-radius: 3px; cursor: pointer; background: #dfe; border: none; }
@@ -61,9 +65,10 @@ span { display: block; }
 #utils .button { float: right; }
 
 .button { font-size: 0.9em; margin: 13px; text-decoration: none; background: #aaa; color: #000; padding: 2px 13px; -moz-border-radius: 3px; border-radius: 3px; cursor: pointer; }
+.button:focus,
 .button:hover { opacity: 0.7; }
 
-.button.positive { background: #dfe; }
-.button.negative { background: #fed; }
+.button.positive { background: #dfe; border: 1px solid #afe; }
+.button.negative { background: #fed; border: 1px solid #fea; }
 
-.button.active { background: #c00; color: #fff; }
+.button.active { background: #c00; color: #fff; border: 1px solid #a00; }

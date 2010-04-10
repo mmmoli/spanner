@@ -21,10 +21,43 @@
 	<h1>Spanner <sup>Prototype</sup></h1>
 	<div id="messages"></div>
 	<div id="dash">
-		<p id="actions"></p>
-		<p id="utils"></p>
+		<div id="actions">
+			<a class="button positive" id="editor">Edit</a>
+			<a class="button positive" id="add">Add</a>
+			<a class="button negative" id="deleter">Delete</a>
+			
+			<form action="#" id="addbox" class="off">
+				<span class="in">
+					<label for="newSpanLabel">Label <span>make it unique</span></span></label>
+					<input type="text" id="newSpanLabel" />
+				</span>
+				<span class="in">
+					<label for="newSpanStart">Start <span>e.g. 1 Jan 1984</span></label>
+					<input type="text" id="newSpanStart" />
+				</span>
+				<span class="in">
+					<label for="newSpanEnd">End <span>you guessed it</span></label>
+					<input type="text" id="newSpanEnd" />
+				</span>
+
+				<span class="in"><label for="newSpanType">Type <span>(experimental)</span></label>
+				<select id="newSpanType">
+					<option value="life">Life</option>
+					<option value="education">Education</option>
+					<option value="job">Job</option>
+					<option value="relationship">Relationship</option>
+					<option value="location">Location</option>
+					<option value="thing">Thing</option>
+				</select></span>
+				<input class="submit" type="submit" value="Add" />
+			</form>
+		</div>
+
+		<p id="utils">
+
+		</p>
 	</div>
-	
+
 	<img id="googlething" src="img/lifetile.gif" width="28" height="21" alt="Lifetile" />
 </body>
 </html>

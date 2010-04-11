@@ -54,6 +54,9 @@ var spanner = function(google){
         this.spanWidth = this.spanLength * scale;
         this.spanOffsetWidth = this.spanOffset * scale;
 
+		this.spanWidthPercent = (this.spanWidth/this.max) * 100;
+        this.spanOffsetWidthPercent = (this.spanOffsetWidth/this.max) * 100;
+
         this.create();
         this.setPosition();
     };
@@ -61,8 +64,8 @@ var spanner = function(google){
 
     // =================================================================
     Span.prototype.setPosition = function(){
-        $("#" + this.id).css("width", this.spanWidth);
-        $("#" + this.id).css("margin-right", this.spanOffsetWidth);
+        $("#" + this.id).css("width", this.spanWidthPercent + '%');
+        $("#" + this.id).css("margin-right", this.spanOffsetWidthPercent + '%');
     };
 
     // =================================================================

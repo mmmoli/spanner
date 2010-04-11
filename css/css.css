@@ -31,13 +31,13 @@ span { display: block; }
 
 .label { font-size: 0.7em; line-height: 13px; height: 13px; color: #ddd; display: block; overflow: hidden; }
 
-.tip { opacity: 0; display: block; padding: 2px 13px; background: #c00; width: 60px; height: 13px; position: absolute; top: -24px; left: -26px; font-size: 0.7em; color: #fff; -moz-border-radius: 3px; border-radius: 3px; text-decoration: none; z-index: 999; }
+.tip { display: none; padding: 2px 13px; background: #c00; width: 60px; height: 13px; position: absolute; top: -24px; left: -26px; font-size: 0.7em; color: #fff; -moz-border-radius: 3px; border-radius: 3px; text-decoration: none; z-index: 999; }
 .tip span { display: block; width: 0; height: 0; border: 6px solid transparent; border-bottom: none; border-top-color: #c00; position: absolute; top: 17px; left: 19px; }
 
 .end .tip { top: 8px; left: -23px; }
 .end .tip span { display: block; width: 0; height: 0; border: 6px solid transparent; border-top: none; border-bottom-color: #c00; position: absolute; top: -6px; left: 18px; }
 
-.over .tip { opacity: 1; /* cursor: ew-resize; */ }
+.over .tip { display: block; /* cursor: ew-resize; */ }
 
 
 /* ====================================================== */
